@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"> <!-- Spring Security 네임스페이스 추가 -->
 
 <head th:insert="~{common :: commonHead}">
   <title>Product Manager</title>
@@ -8,8 +9,36 @@
 
 <body>
 <div class="container">
-  <h1 class="mt-5">Product List</h1>
-  <a class="btn btn-primary mb-3" th:href="@{/products/new}">Create New Product</a>
+  <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+    <div th:if="${loginSuccessMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong th:text="${loginSuccessMessage}"></strong>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <h1 class="mb-0">Product List</h1>
+    <div>
+      <!-- 로그인 정보 및 로그아웃 버튼 -->
+      <span sec:authorize="isAuthenticated()">
+          이메일: <strong sec:authentication="name">User</strong> |
+          권한: <span sec:authentication="principal.authorities">[ROLE_USER]</span>
+          <form th:action="@{/logout}" method="post" class="d-inline">
+              <button type="submit" class="btn btn-outline-secondary btn-sm ms-2">로그아웃</button>
+          </form>
+      </span>
+
+      <span sec:authorize="!isAuthenticated()">
+          <a th:href="@{/login}" class="btn btn-outline-primary btn-sm">Login</a>
+      </span>
+    </div>
+  </div>
+
+
+
+    <a class="btn btn-primary" th:href="@{/products/new}">Create New Product</a>
+
+
+
+    <a th:href="@{/admin/users}" class="btn btn-secondary">회원관리(관리자전용)</a>
+
 
   <table class="table table-bordered">
     <thead>
@@ -19,7 +48,9 @@
       <th>Brand</th>
       <th>Made In</th>
       <th>Price</th>
-      <th>Actions</th>
+
+      <th sec:authorize="hasRole('ADMIN')">Actions</th>
+
     </tr>
     </thead>
     <tbody>
@@ -29,13 +60,24 @@
       <td th:text="${product.brand}">Brand</td>
       <td th:text="${product.madeIn}">Made in</td>
       <td th:text="${product.price}">Price</td>
-      <td>
+      <!-- ADMIN 역할 사용자에게만 Edit/Delete 버튼 표시 -->
+      <td sec:authorize="hasRole('ADMIN')">
         <a class="btn btn-primary btn-sm" th:href="@{'/products/edit/' + ${product.id}}">Edit</a>
-        <a class="btn btn-danger btn-sm" th:href="@{'/products/delete/' + ${product.id}}">Delete</a>
+        <a class="btn btn-danger btn-sm" th:href="@{'/products/delete/' + ${product.id}}"
+           onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
       </td>
+
+    </tr>
+
+    <tr th:if="${#lists.isEmpty(listProducts)}">
+      <td colspan="6" class="text-center">No products found.</td>
     </tr>
     </tbody>
   </table>
+
+
+
+
 </div>
 
 <!-- Bootstrap JS fragment 삽입 -->
